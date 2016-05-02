@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block heading %}
+    <script type="text/javascript">
+{#        $(function() {#}
+{#            var#}
+{#                    timeStr,#}
+{#                    recalculateTime;#}
+{##}
+{#            timeStr = function(seconds) {#}
+{#                var#}
+{#                        mins,#}
+{#                        secs;#}
+{##}
+{#                mins = Math.floor(seconds / 60);#}
+{#                secs = seconds % 60;#}
+{##}
+{#                return ("00" + mins).slice (-2) + "m "+("00" + secs).slice (-2)+"s";#}
+{#            };#}
+{##}
+{#            recalculateTime = function () {#}
+{#                $(".continueplaying").each(function() {#}
+{#                    if ($(this).hasClass("disabled")) {#}
+{#                        return;#}
+{#                    }#}
+{##}
+{#                    var#}
+{#                            seconds = parseInt($(this).attr("seconds")),#}
+{#                            encounter = $(this).attr("encounter"),#}
+{#                            player = $(this).attr("player");#}
+{#                    seconds -= 1;#}
+{#                    if (seconds<=0) {#}
+{#                        $(this).removeAttr("href");#}
+{#                        $(this).addClass("disabled");#}
+{#                        $(this).text("EXPIRED");#}
+{#                        $.post("/expire", {"encounter":encounter, "player": player}, function(data) {#}
+{#                            console.log(data);#}
+{#                        }, "json");#}
+{#                    } else {#}
+{#                        $(this).attr("seconds", seconds);#}
+{#                        $(this).text("CONTINUE - " + timeStr(seconds));#}
+{#                    }#}
+{#                });#}
+{#            };#}
+{##}
+{#            setInterval(recalculateTime, 1000);#}
+{#        });#}
+    </script>
+{% endblock %}
+
+{% block content %}
+    <nav class="blue-grey lighten-3" role="navigation">
+        <div class="nav-wrapper container">
+            <a id="logo-container" href="/" class="brand-logo">
+                <img src="/static/img/g3429.png" alt="BattleJS"/>
+            </a>
+        </div>
+    </nav>
+
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+
+            <div class="row" id="panel-user">
+                <div class="col s12 l5 center">
+
+                </div>
+
+                <div class="col s12 l12 center">
+                    <h5>Leaderboard</h5>
+                    <table class="battles">
+                        <thead>
+                        <tr>
+                            <th data-field="id" colspan="2">Player</th>
+                            <th data-field="name">Level</th>
+                            <th data-field="price">Score</th>
+                            <th></th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for p in players %}
+                            <tr>
+                                <td width="35px"><img src="/static/img/avatars/{{ p.avatar_number }}.png" class="list-avatar"/></td>
+                                <td>
+                                    {{ p.name }}<br/>
+                                    <span class="smaller">Level {{ p.level }}</span>
+                                </td>
+                                <td>{{ p.level }}</td>
+                                <td>
+                                    {{  p.score }}
+                                </td>
+                                <td>
+                                    {% if logged %}
+                                        {% ifequal player.id p.id %}
+
+                                        {% else %}
+                                            <a href="/duel/{{ p.id }}" class="btn right">Duel</a>
+                                        {% endifequal %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5">
+                                    NO PLAYERS
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

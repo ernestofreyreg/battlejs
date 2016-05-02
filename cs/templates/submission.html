@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+
+{% block heading %}
+    <script src="/static/js/src/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script>
+        $(function() {
+            var editor1 = ace.edit("editor1");
+            editor1.setTheme("ace/theme/tomorrow");
+            editor1.session.setMode("ace/mode/javascript");
+            editor1.setAutoScrollEditorIntoView(true);
+            editor1.setOption("maxLines", 20);
+
+            Array.prototype.equals = function (array) {
+                // if the other array is a falsy value, return
+                if (!array)
+                    return false;
+
+                // compare lengths - can save a lot of time
+                if (this.length != array.length)
+                    return false;
+
+                for (var i = 0, l=this.length; i < l; i++) {
+                    // Check if we have nested arrays
+                    if (this[i] instanceof Array && array[i] instanceof Array) {
+                        // recurse into the nested arrays
+                        if (!this[i].compare(array[i]))
+                            return false;
+                    }
+                    else if (this[i] != array[i]) {
+                        // Warning - two different object instances will never be equal: {x:20} != {x:20}
+                        return false;
+                    }
+                }
+                return true;
+            };
+
+            var
+                    timeStr,
+                    evaluateTests,
+                    recalculateTime;
+
+            evaluateTests = function (tests) {
+                var
+                        fn,
+                        fnText;
+
+                eval(editor1.getValue());
+
+                var result = true;
+                for (var i = 0; i < tests.length; i += 1) {
+                    var tr = eval(tests[i]);
+                    if (tr) {
+                        $("#test"+i).html("<i class='mdi-action-thumb-up mdi-green'></i>");
+                    } else {
+                        $("#test"+i).html("<i class='mdi-action-thumb-down mdi-red'></i>");
+                    }
+                    result &= tr;
+                }
+
+                if (result) {
+                    $("#submitfn").attr("href", "#");
+                    $("#submitfn").removeClass("disabled");
+                } else {
+                    $("#submitfn").removeAttr("href");
+                    $("#submitfn").addClass("disabled");
+                }
+
+
+            };
+
+            timeStr = function(seconds) {
+                var
+                        mins,
+                        secs;
+
+                mins = Math.floor(seconds / 60);
+                secs = seconds % 60;
+
+                return ("00" + mins).slice (-2) + "m "+("00" + secs).slice (-2)+"s";
+            };
+
+            recalculateTime = function () {
+                $(".clocktimer").each(function() {
+                    if ($(this).hasClass("disabled")) {
+                        return;
+                    }
+
+                    var
+                            seconds = parseInt($(this).attr("seconds")),
+                            encounter = $(this).attr("encounter"),
+                            player = $(this).attr("player");
+                    seconds -= 1;
+                    if (seconds<=0) {
+                        $(this).removeAttr("href");
+                        $(this).addClass("disabled");
+                        $(this).text("EXPIRED");
+                        {#                        $.post("/expire", {"encounter":encounter, "player": player}, function(data) {#}
+                        {#                            console.log(data);#}
+                        {#                        }, "json");#}
+                    } else {
+                        $(this).attr("seconds", seconds);
+                        $(this).text("TIME : " + timeStr(seconds));
+                    }
+                });
+            };
+
+            setInterval(recalculateTime, 1000);
+
+            $("#testfn").click(function() {
+                $.post("/tests", {"match": "{{ match.id }}", "battle": "{{ match.battle_id }}", "fn": btoa(editor1.getValue())}, function (data) {
+                    if (data.result == "ok") {
+                        evaluateTests(data.tests);
+                    }
+                }, "json");
+                return false;
+            });
+
+            $("#submitfn").click(function() {
+                $.post("/finalize", {"match": "{{ match.id }}", "battle": "{{ match.battle_id }}"}, function(data) {
+                    if (data.result=="ok") {
+                        location.href = "/";
+                    }
+                }, "json");
+            });
+        })
+    </script>
+{% endblock %}
+{% block content %}
+    <nav class="blue-grey lighten-3" role="navigation">
+        <div class="nav-wrapper container">
+            <a id="logo-container" href="/" class="brand-logo">
+                <img src="/static/img/g3429.png" alt="BattleJS"/>
+            </a>
+        </div>
+    </nav>
+
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <div class="row" id="panel-user">
+                <div class="col s12 l12 center">
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td width="60px"><img src="/static/img/avatars/{{ match.player1.avatar_number }}.png" class="submission-avatar"/></td>
+                            <td>
+                                <h5>{{ match.player1.name }}</h5>
+                                <span class="smaller">Level {{ match.player1.level }}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <img src="/static/img/versus.png" alt="VS" width="100px"/>
+                                <br/>
+                                <a class="btn clocktimer" seconds="{{ player_time_left.seconds }}">TIME : {{ player_time_left_str }}</a>
+
+                            </td>
+                            <td style="text-align: right">
+                                {% if match.player2 %}
+                                    <h5>{{ match.player2.name }}</h5>
+                                    <span class="smaller">Level {{ match.player2.level }}</span>
+                                {% else %}
+                                    <h5>UNKNOWN</h5>
+                                    <span class="smaller">Level ?</span>
+                                {% endif %}
+                            </td>
+                            <td width="60px"><img src="/static/img/avatars/{% if match.player2 %}{{ match.player2.avatar_number }}{% else %}39{% endif %}.png" class="submission-avatar-right"/></td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+
+
+
+                    <p class="flow-text left-align">
+                        {{ match.battle.description }}
+                        <br/>
+                        Create a function that is called "fn" that passes the following tests:
+                    </p>
+
+                    <ul class="collection">
+                        {% for test in match.battle.visibletests.splitlines %}
+                            <li class="collection-item left-align"><code>{{ test }}</code> <span class="badge" id="test{{ forloop.counter0 }}"></span></li>
+                        {% endfor %}
+
+                    </ul>
+
+                </div>
+
+
+
+
+
+            </div>
+            <div class="row">
+                <div class="col l9 s12">
+                    <pre id="editor1">
+{{ fn }}
+                    </pre>
+                </div>
+                <div class="col l3 s12">
+                    <a href="#" class="btn" id="testfn"><i class="mdi-av-play-arrow right"></i>Test It</a><br/><br/>
+                    <a  class="btn btn-info disabled" id="submitfn"><i class="mdi-navigation-check right"></i>Submit</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

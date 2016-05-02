@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+            <div class="row center">
+                <a href="/">
+                    <img class="center" src="/static/img/g3411.png" alt="Hacks"/>
+                </a>
+            </div>
+
+            <div class="row center">
+                <h5 class="header col s12 light">Battle other programmers by writing functions in Javascript.</h5>
+            </div>
+
+            <div class="row center">
+                <form class="col s12" action="/register" method="POST">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="input-field col l6 offset-l3 s12">
+                            <input name="name" type="text" class="validate">
+                            <label for="name">Full Name</label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="input-field col l6 offset-l3 s12">
+                            <input name="email" type="email" class="validate">
+                            <label for="email">Email</label>
+                        </div>
+                    </div>
+
+                    {% if messages %}
+                        <div class="row">
+                            <div class="input-field col l6 offset-l3 s12">
+                                {% for m in messages %}
+                                    <div class="card-panel red darken-1"><span class="white-text">{{ m }}</span></div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="input-field col l6 offset-l3 s12">
+                            <button type="submit" class="waves-effect waves-light btn-large cyan">
+                                Start Playing <i class="mdi-content-send right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <br><br>
+
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="section">
+
+            <!--   Icon Section   -->
+            <div class="row">
+                <div class="col s12 m4">
+                    <div class="icon-block">
+                        <h2 class="center light-blue-text"><i class="mdi-communication-email"></i></h2>
+                        <h5 class="center">All emails</h5>
+
+                        <p class="light">
+                            All you have to do is check your email. Battles will come to you and if you open it that
+                            will meant the acceptance of the challenge.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col s12 m4">
+                    <div class="icon-block">
+                        <h2 class="center light-blue-text"><i class="mdi-social-group"></i></h2>
+                        <h5 class="center">Coder vs. Coder</h5>
+
+                        <p class="light">
+                            You will be battling against other coders. You can also challenge any Coder to a duel.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col s12 m4">
+                    <div class="icon-block">
+                        <h2 class="center light-blue-text"><i class="mdi-image-flash-on"></i></h2>
+                        <h5 class="center">Faster is better</h5>
+
+                        <p class="light">
+                            Once you start the battle, as fast as you can submit your response the better.
+
+
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+{% endblock %}

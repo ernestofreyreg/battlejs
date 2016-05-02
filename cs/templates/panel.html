@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block heading %}
+    <script type="text/javascript">
+        $(function() {
+            var
+                    timeStr,
+                    recalculateTime;
+
+            timeStr = function(seconds) {
+                var
+                        mins,
+                        secs;
+
+                mins = Math.floor(seconds / 60);
+                secs = seconds % 60;
+
+                return ("00" + mins).slice (-2) + "m "+("00" + secs).slice (-2)+"s";
+            };
+
+            recalculateTime = function () {
+                $(".continueplaying").each(function() {
+                    if ($(this).hasClass("disabled")) {
+                        return;
+                    }
+
+                    var
+                            seconds = parseInt($(this).attr("seconds")),
+                            encounter = $(this).attr("encounter"),
+                            player = $(this).attr("player");
+                    seconds -= 1;
+                    if (seconds<=0) {
+                        $(this).removeAttr("href");
+                        $(this).addClass("disabled");
+                        $(this).text("EXPIRED");
+                        $.post("/expire", {"encounter":encounter, "player": player}, function(data) {
+                            console.log(data);
+                        }, "json");
+                    } else {
+                        $(this).attr("seconds", seconds);
+                        $(this).text("CONTINUE - " + timeStr(seconds));
+                    }
+                });
+            };
+
+            setInterval(recalculateTime, 1000);
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <nav class="blue-grey lighten-3" role="navigation">
+        <div class="nav-wrapper container">
+            <a id="logo-container" href="/" class="brand-logo">
+                <img src="/static/img/g3429.png" alt="BattleJS"/>
+            </a>
+        </div>
+    </nav>
+
+
+
+
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="container">
+            <br><br>
+
+            <div class="row" id="panel-user">
+                <div class="col s12 l5 center">
+
+                    <table>
+                        <tbody>
+                        <tr>
+                            <td width="120px">
+                                <img class="panel-img" src="/static/img/avatars/{{ player.avatar }}" alt="Avatar"/>
+                            </td>
+                            <td valign="top">
+                                <h2>{{ player.name }}</h2>
+                                <span class="blue-text text-darken-2">{{ player.email }}</span><br/>
+                                <b>Level</b> {{ player.level }}<br/><b>Score</b> {{ player.score }}
+
+                                <div class="spaceup">
+                                    {% for i in player.badges %}
+                                        <img class="badge" src="/static/img/badges/{{ i }}.png"/>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="spaceup">
+                                {% if player.cannot_create_match %}
+                                    <a class="waves-effect waves-light btn-large disabled">Play Now
+                                        <i class="mdi-content-send right"></i>
+                                    </a>
+                                {% else %}
+                                    <a class="waves-effect waves-light btn-large cyan" href="/playnow">Play Now
+                                        <i class="mdi-content-send right"></i>
+                                    </a>
+                                {% endif %}
+                                </div>
+
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+
+                <div class="col s12 l7 center">
+                    <h5>Battles</h5>
+                    <table class="battles">
+                        <thead>
+                        <tr>
+                            <th data-field="id" colspan="2">Player</th>
+                            <th data-field="name">Category</th>
+                            <th data-field="price">Result</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        {% for encounter in player.encounters %}
+                            <tr>
+                                <td width="35px"><img src="/static/img/avatars/{{ encounter.against_avatar }}.png" class="list-avatar"/></td>
+                                <td>
+                                    {{ encounter.against }}<br/>
+                                    <span class="smaller">Level {{ encounter.against_level }}</span>
+                                </td>
+                                <td>{{ encounter.category }}</td>
+                                <td>
+                                    {% if encounter.closed %}
+                                        {% if encounter.mutually_expired %}
+                                            <span class="both-expired">NO WINNER</span>
+                                        {% else %}
+                                            {% if encounter.result %}
+                                                <span class="you-won">YOU WON</span>
+                                            {% else %}
+                                                <span class="you-lose">YOU LOSE</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        {% if encounter.waiting_results %}
+                                            <span class="you-lose">WAITING</span>
+                                        {% else %}
+                                            {% if encounter.expired %}
+                                                <a class="btn disabled">EXPIRED</a>
+                                            {% else %}
+                                                {% if encounter.waiting %}
+
+                                                {% else %}
+                                                    <a href="/submission/{{ encounter.id }}" class="btn continueplaying" encounter="{{ encounter.id }}" player="{{ encounter.player_no }}" seconds="{{ encounter.remaining_time_seconds.seconds }}">CONTINUE - {{ encounter.remaining_time }}</a>
+                                                {% endif %}
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3">
+                                    NO BATTLES
+                                </td>
+                            </tr>
+                        {% endfor %}
+
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
